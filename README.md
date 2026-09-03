@@ -1,7 +1,7 @@
 # SocFakeID — Social-Media Authentication Ceremony (User-Study App)
 
 Android research artifact for the paper **“Stress Testing Social Media Authentication
-Ceremonies of End-to-End Encrypted Messaging with Ephemeral Fake Accounts”** (ISC 2026).
+Ceremonies of End-to-End Encrypted Messaging with Ephemeral Fake Accounts”**.
 
 This module is the **phone application used in the controlled user study** (Section 5 of the
 paper). It re-implements the social-media–based authentication ceremony of
@@ -11,47 +11,9 @@ substituted for the peer's genuine ones. Every accept/reject decision is logged 
 that Benign Success Rate (BSR), Attack Success Rate (ASR), and the mismatched-profile
 baseline can be computed offline.
 
-> Full artifact bundle (app, simulated malicious keyserver, anonymized trial dataset,
-> analysis scripts): <https://sites.google.com/view/socfakeid-v2/artifacts>
-
 ---
 
-## 1. Research context (why this app exists)
-
-An E2EE authentication ceremony binds a peer's identity to their public key so that a
-**compromised, malicious, or coerced key server cannot run a man-in-the-middle attack**.
-Social-media–based ceremonies replace fingerprint comparison with "do these social
-profiles belong to my peer?" The paper's central claim (Condition 1 / Proposition 1) is
-that this is a **structural** weakness: when the service chooses which identities are shown,
-and the interface surfaces only forgeable cues (profile picture, display name, username),
-the verifier's decision is statistically independent of whether the shown identity is genuine.
-
-**SocFakeID** operationalizes that: the malicious server hands the client a forged key plus
-links to **short-lived attacker-created social accounts** that copy the peer's public
-profile and advertise the forged key. The attack works entirely inside the trusted app UI —
-no phishing, no credential theft, and the social-media provider is still assumed honest.
-
-This app is the **ceremony-client half** of that setup. The "malicious keyserver" is
-*simulated* by the curated link tables in the code plus a set of researcher-created X /
-Instagram accounts (real, look‑alike, and unrelated) that the tables point at; there is no
-live server or cryptographic key-comparison code in this module (see §6).
-
----
-
-## 2. Threat model realized by the app
-
-| Element | In the paper | In this app |
-| --- | --- | --- |
-| Verifying user *U* | Study participant | Person holding the phone; identified by the name typed on the registration screen |
-| Intended peer *P* | "Bob" (and symmetrically "Alice") | Fixed peer **Bob**; an unused Alice path exists (§7) |
-| Adversarial service *S\** | Compromised/coerced keyserver that selects the presented identity set | The hard-coded `BobLinks` tables + researcher-created accounts they link to |
-| Surfaced cue set *C* | Profile picture + display name (username on click-through) | The two `ImageView`s (X + Instagram) and the account URLs opened on tap |
-| Prior knowledge *K\_U* | Empty in target scenarios (new contact, pseudonymous) | Only the short "familiarization" screen; no independent reference |
-| Decision `Ver` | Accept / reject | **Accept** / **Reject** buttons, one decision per trial |
-
----
-
-## 3. Screen-by-screen flow
+## 1. Screen-by-screen flow
 
 Launcher → `FinalActivity`, all in package `com.example.socialmediaattack`:
 
@@ -91,7 +53,7 @@ layouts but `visibility="gone"` — the study deliberately uses two buttons inst
 
 ---
 
-## 4. Session types and how the code balances them
+## 2. Session types and how the code balances them
 
 Each entry in the `BobLinks[]` array pairs a drawable with a social URL. On every trial the
 array is shuffled (`Collections.shuffle`), the first element is drawn, its partner image +
@@ -122,7 +84,7 @@ pairs. Accept/Reject are not recorded — this screen only builds task familiari
 
 ---
 
-## 5. Data collection / output format
+## 3. Data collection / output format
 
 * Participant name is captured in `MainActivity`, stored in `SharedPreferences("myUserPrefs")`
   as `firstName` / `lastName`, and reused by the ceremony screens.
@@ -153,28 +115,7 @@ the app.
 
 ---
 
-## 6. What is and isn't implemented
-
-**Implemented here:** the ceremony UI, the fixed trial schedule, the three identity classes,
-click-through to the linked accounts, and per-decision logging.
-
-**Simulated / external:**
-
-* **Malicious keyserver.** Represented by the hard-coded `BobLinks` / `AliceLinks` tables
-  (the "identity set the service delivers") plus researcher-created X/Instagram accounts.
-  There is no network client and no key-server process in this module.
-* **Key posting / key comparison.** The paper stores each account→key mapping (including
-  forged keys) on a side server because platforms don't allow posting keys directly. This
-  app does not perform the byte-level "does the advertised key match the server key" check;
-  it presents profiles and records the human decision, which is the quantity the study
-  measures. The forged-key match is fixed by construction in the study setup.
-* **Real cryptography, Signal protocol, messaging.** None. The Signal look-and-feel
-  (`core_ultramarine` = Signal blue, `TextSecure.*` styles, "Signal will use these
-  accounts…" copy) is cosmetic, to reproduce the deployed interface's cue constraints.
-
----
-
-## 7. Project layout
+## 4. Project layout
 
 ```
 .
@@ -224,7 +165,7 @@ click-through to the linked accounts, and per-decision logging.
 
 ---
 
-## 8. Build & run
+## 5. Build & run
 
 ### Prerequisites
 * Android Studio (Giraffe-era) or a standalone Android SDK with **platform 32** + build-tools
@@ -301,7 +242,7 @@ adb pull /sdcard/usersData
 
 ---
 
-## 9. Configuration knobs
+## 6. Configuration knobs
 
 | Want to change | Where |
 | --- | --- |
@@ -316,29 +257,7 @@ adb pull /sdcard/usersData
 
 ---
 
-## 10. Known issues & caveats
-
-* **Empty source manifest** — see §8; blocks a clean build until restored.
-* **Alice path is dead code** — `FriendTwoActivity` and `aliceAuthenticationCeremony` are
-  complete but no screen navigates to them; the shipped flow is Bob-only.
-* **Machine-specific `local.properties`** is committed and points at a nonexistent SDK path.
-* **Legacy external storage** — `Environment.getExternalStorageDirectory()` +
-  `MANAGE_EXTERNAL_STORAGE` is deprecated; on newer Android use app-scoped storage or the
-  MediaStore/SAF and re-test the write path.
-* **`MainActivity` name validation** — the empty-check on last name is an `if … else` where
-  the `else` binds only to the last `if`; an empty first name with a non-empty last name
-  still proceeds. Cosmetic for the study (facilitator enters the name) but worth fixing.
-* **Disk rewrite per decision** — each Accept/Reject reopens the file without append and
-  rewrites the accumulated string; fine at 40 trials, not a general-purpose logger.
-* **No crypto / no server / no messaging** — this is a UI + protocol-flow simulation, not a
-  deployable messenger (§6).
-* `bob_fake_img_x_3` / `bob_fake_img_instagram_3` drawables exist but are only referenced in
-  commented-out `BobLinks` entries.
-* `strings.xml` defines only `app_name`; all other UI copy is hard-coded in layouts/code.
-
----
-
-## 11. Ethics & responsible use
+## 7. Ethics & responsible use
 
 The user study received **IRB approval**; participation was voluntary with opt-out, and no
 identifiable data was stored. All "peer" and "attacker" accounts were **researcher-created** —
@@ -351,18 +270,3 @@ transparency, user-controlled/decentralized identifiers, or a guaranteed out-of-
 reference.
 
 ---
-
-## 12. Citation
-
-```bibtex
-@inproceedings{socfakeid2026,
-  title     = {Stress Testing Social Media Authentication Ceremonies of
-               End-to-End Encrypted Messaging with Ephemeral Fake Accounts},
-  booktitle = {Proceedings of the Information Security Conference (ISC)},
-  year      = {2026}
-}
-```
-
-Key related work: Vaziripour et al., *“I don't even have to bother them!”* (CHI ’19);
-Linker & Basin, *SOAP: A Social Authentication Protocol* (USENIX Security ’24);
-Yadav et al., *Automatic Detection of Fake Key Attacks in Secure Messaging* (CCS ’22).
