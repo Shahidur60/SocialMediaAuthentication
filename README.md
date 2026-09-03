@@ -53,38 +53,7 @@ layouts but `visibility="gone"` — the study deliberately uses two buttons inst
 
 ---
 
-## 2. Session types and how the code balances them
-
-Each entry in the `BobLinks[]` array pairs a drawable with a social URL. On every trial the
-array is shuffled (`Collections.shuffle`), the first element is drawn, its partner image +
-URL are chosen by matching on the drawable id, and a ground-truth label is stored in
-`currentImage`. Per-category counters cap how many of each type appear, and the shuffle is
-re-rolled while a cap is hit or the same image repeats twice in a row.
-
-### `bobAuthenticationCeremony` — 40 trials
-
-| Session type (paper) | `currentImage` label | Drawables | Example handles | Count |
-| --- | --- | --- | --- | --- |
-| **Benign** (reference) | `Bob's real X and instagram accounts.` | `bob_real_img_x`, `bob_real_img_instagram` | `@Bob253784738`, `instagram.com/bob253784738` | `counterRealProfile == 10` |
-| **SocFakeID** (hidden attack) | `Bob's fake X and instagram accounts. Hidden Attack Case` | `bob_fake_img_x(_2)`, `bob_fake_img_instagram(_2)` | `@Bob253874738`, `@Bob253748738` (digits transposed; picture ≈ identical) | `counterFakeProfile == 10` |
-| **Baseline Attack** (clearly mismatched) | `Bob's clear fake X and instagram accounts.` / `Alice's clear fake …` | `clear_bob_fake_img_*`, `clear_bob_fake_img_*_2`, `clear_alice_fake_img_*`, `alice_fake_img_*` | `@Bob`, `tombobnyc`, `bobbyjonc`, `boboiboy`, `Bee_Bob`, `bobbyleelive`, `doekis_`, `alicelk` | `counterClearFakeProfile == 20` |
-
-10 + 10 + 20 = 40, matching the paper: “twenty displayed Bob's reference picture and name
-(half of them SocFakeID), twenty displayed unrelated identities.”
-
-### `exampleForBob` — 6 practice trials
-
-`counterRealProfile == 3` real reference pairs + `counterClearFakeProfile == 3` "clear fake"
-pairs. Accept/Reject are not recorded — this screen only builds task familiarity.
-
-### `aliceAuthenticationCeremony` — 30 trials (currently unreachable, see §7)
-
-10 real (`alice_real_img_*`, `@Alice100010000`) + 10 SocFakeID (`alice_fake_img_*`,
-`@Alice1000100000`, one extra digit) + 10 clear-fake, logged to `<First>_<Last>_Auth4Alice.txt`.
-
----
-
-## 3. Data collection / output format
+## 2. Data collection / output format
 
 * Participant name is captured in `MainActivity`, stored in `SharedPreferences("myUserPrefs")`
   as `firstName` / `lastName`, and reused by the ceremony screens.
@@ -115,7 +84,7 @@ the app.
 
 ---
 
-## 4. Project layout
+## 3. Project layout
 
 ```
 .
@@ -165,7 +134,7 @@ the app.
 
 ---
 
-## 5. Build & run
+## 4. Build & run
 
 ### Prerequisites
 * Android Studio (Giraffe-era) or a standalone Android SDK with **platform 32** + build-tools
@@ -242,7 +211,7 @@ adb pull /sdcard/usersData
 
 ---
 
-## 6. Configuration knobs
+## 5. Configuration knobs
 
 | Want to change | Where |
 | --- | --- |
@@ -257,7 +226,7 @@ adb pull /sdcard/usersData
 
 ---
 
-## 7. Ethics & responsible use
+## 6. Ethics & responsible use
 
 The user study received **IRB approval**; participation was voluntary with opt-out, and no
 identifiable data was stored. All "peer" and "attacker" accounts were **researcher-created** —
